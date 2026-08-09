@@ -12,3 +12,4 @@ bridge.log
 
 # Env
 .env
+.bridge.env
