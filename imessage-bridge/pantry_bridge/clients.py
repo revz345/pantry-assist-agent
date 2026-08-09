@@ -3,11 +3,36 @@
 import asyncio
 import json
 import os
+import re
 
 import httpx
 import websockets
 
 from pantry_bridge.parser import normalize_phone
+
+# ─── Markdown stripping for iMessage ──────────────────────────
+# iMessage doesn't render markdown, so any **bold**, *italic*, or
+# # headers leak through as literal characters. Strip them as a
+# safety net even after telling the LLM to use plain text.
+_MD_PATTERNS = [
+    (re.compile(r"\*\*(.+?)\*\*"), r"\1"),  # **bold**
+    (re.compile(r"__(.+?)__"), r"\1"),        # __bold__
+    (re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)"), r"\1"),  # *italic* (not part of **)
+    (re.compile(r"`([^`]+)`"), r"\1"),        # `code`
+    (re.compile(r"^#{1,6}\s+", re.MULTILINE), ""),  # # headers
+    (re.compile(r"^\s*[-*+]\s+", re.MULTILINE), "• "),  # - / * bullets → •
+]
+
+
+def _strip_markdown(text: str) -> str:
+    """Return text with common markdown markers removed/simplified.
+    Conservative — only touches patterns that look like real formatting,
+    not legitimate asterisks in prose."""
+    for pattern, repl in _MD_PATTERNS:
+        text = pattern.sub(repl, text)
+    # Collapse 3+ blank lines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 
 
 # ─── OpenClaw Gateway Client ───────────────────────────────────
@@ -60,10 +85,15 @@ class OpenClawClient:
     async def chat_agent(self, text: str, contact: str = "unknown") -> str:
         """Steer the OpenClaw agent (which has the pantry MCP tools) with a
         message. Uses a per-contact session key so each chat keeps memory.
-        Falls back to the raw WS tool call if the CLI path fails."""
+        Falls back to the raw WS tool call if the CLI path fails.
+
+        The --channel imessage flag tells OpenClaw the delivery channel so
+        its system prompt applies iMessage formatting rules (no markdown
+        headers/tables, plain text only)."""
         session_key = f"pantry-bridge-{normalize_phone(contact) or contact.replace('@', '')}"
         env = dict(os.environ)
         cmd = ["openclaw", "agent", "--agent", "main", "--json",
+               "--channel", "imessage",
                "--session-key", session_key, "--message", text]
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -75,7 +105,7 @@ class OpenClawClient:
             data = json.loads(stdout.decode())
             payloads = data.get("result", {}).get("payloads") or []
             if payloads and payloads[0].get("text"):
-                return payloads[0]["text"].strip()
+                return _strip_markdown(payloads[0]["text"].strip())
             summary = data.get("summary") or data.get("status") or ""
             return f"🤖 (agent: {summary})"
         except Exception as e:
