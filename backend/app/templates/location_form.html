@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{% if location %}Edit Location{% else %}Add Location{% endif %}</h1>
+        <p class="page-subtitle">{% if location %}Update this location's details{% else %}Create a new storage location{% endif %}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 560px;">
+    <form method="post" action="{{ '/locations/' ~ location.id ~ '/edit' if location else '/locations/new' }}">
+        <div class="form-group">
+            <label for="name">Name *</label>
+            <input type="text" id="name" name="name" value="{{ location.name if location else '' }}" required autofocus>
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea name="description" id="description" rows="3">{{ location.description if location else '' }}</textarea>
+        </div>
+        <div class="flex" style="margin-top: var(--space-5);">
+            <button type="submit" class="btn">{% if location %}Update{% else %}Create{% endif %} Location</button>
+            <a href="/locations" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pantry Assist — track your pantry, expiry dates, and recipe ideas.">
+    <title>{% block title %}Pantry Assist{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script defer src="/static/js/app.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <header class="site-header">
+        <div class="container nav-inner">
+            <a href="/" class="brand" aria-label="Pantry Assist home">
+                <span class="brand-logo" aria-hidden="true">🥫</span>
+                <span>Pantry Assist</span>
+            </a>
+
+            <nav id="nav-links" class="nav-links" aria-label="Main navigation">
+                <a href="/" class="nav-link" {% if active_page == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+                <a href="/items" class="nav-link" {% if active_page == 'items' %}aria-current="page"{% endif %}>Items</a>
+                <a href="/locations" class="nav-link" {% if active_page == 'locations' %}aria-current="page"{% endif %}>Locations</a>
+                <a href="/reminders" class="nav-link" {% if active_page == 'reminders' %}aria-current="page"{% endif %}>Reminders</a>
+                <a href="/recipes" class="nav-link" {% if active_page == 'recipes' %}aria-current="page"{% endif %}>Recipes</a>
+            </nav>
+
+            <div class="nav-actions">
+                <button id="theme-toggle" class="icon-btn" aria-label="Toggle dark mode">🌙</button>
+                <button id="nav-toggle" class="icon-btn nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main" class="main-content">
+        <div class="container">
+            {% if flash %}
+            <div data-flash="{{ flash.message }}" data-category="{{ flash.category }}"></div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <noscript>
+        <p style="padding: 12px; text-align: center; color: var(--danger);">
+            Pantry Assist needs JavaScript enabled for filters, toasts, and dark mode.
+        </p>
+    </noscript>
+</body>
+</html>

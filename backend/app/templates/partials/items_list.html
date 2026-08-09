@@ -1,0 +1,129 @@
+{% if items %}
+    {% set grouped = {} %}
+    {% for item in items %}
+        {% set loc_name = item.location.name if item.location else "Uncategorized" %}
+        {% if loc_name not in grouped %}
+            {% set _ = grouped.__setitem__(loc_name, {}) %}
+        {% endif %}
+        {% set cat = item.category or "Other" %}
+        {% if cat not in grouped[loc_name] %}
+            {% set _ = grouped[loc_name].__setitem__(cat, []) %}
+        {% endif %}
+        {% set _ = grouped[loc_name][cat].append(item) %}
+    {% endfor %}
+
+    <div x-data="{ deleteItemId: null, deleteItemName: '' }">
+        {% for loc_name, categories in grouped.items() %}
+        <div class="location-section">
+            <div class="location-header">
+                <h3 class="location-name">
+                    {% if loc_name == "Fridge" %}❄️
+                    {% elif loc_name == "Freezer" %}🧊
+                    {% elif loc_name == "Pantry" %}📦
+                    {% elif loc_name == "Spice Rack" %}🌿
+                    {% elif loc_name == "Idli-Dosa Kit" %}🥞
+                    {% else %}📍{% endif %}
+                    {{ loc_name }}
+                </h3>
+                <span class="location-count">{{ categories.values()|map('length')|sum }} item{{ 's' if categories.values()|map('length')|sum != 1 else '' }}</span>
+            </div>
+            {% for cat, cat_items in categories.items() %}
+            <div class="category-section">
+                <div class="category-header" role="button" tabindex="0" data-category-toggle aria-expanded="true" aria-label="Toggle {{ cat }} category">
+                    <span class="category-chevron" aria-hidden="true">▾</span>
+                    <h4 class="category-name">{{ cat }}</h4>
+                    <span class="category-count">{{ cat_items|length }}</span>
+                </div>
+                <div class="category-body">
+                    <div class="table-wrapper">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;" scope="col">
+                                        <input type="checkbox" class="row-checkbox select-all" aria-label="Select all items in {{ cat }}" title="Select all">
+                                    </th>
+                                    <th scope="col">Item</th>
+                                    <th scope="col">Qty</th>
+                                    <th scope="col">Unit</th>
+                                    <th scope="col">Expiry</th>
+                                    <th scope="col" class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cat_items %}
+                                <tr data-item-id="{{ item.id }}" data-qty="{{ item.quantity }}" class="{% if item.expiry_date and item.expiry_date < today %}expired{% elif item.expiry_date and item.expiry_date <= expiring_cutoff %}expiring-soon{% endif %}">
+                                    <td>
+                                        <input type="checkbox" class="row-checkbox" value="{{ item.id }}" data-name="{{ item.name|e }}" aria-label="Select {{ item.name|e }}">
+                                    </td>
+                                    <td class="item-name-col">
+                                        <span class="item-name">{{ item.name }}</span>
+                                        {% if item.barcode %}
+                                            <span class="barcode">📱 {{ item.barcode }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="qty-col">
+                                        <span class="inline-qty">
+                                            <button type="button" class="btn-text" data-qty-action="-1" aria-label="Decrease quantity of {{ item.name|e }}">−</button>
+                                            <input class="qty-input" type="number" step="0.5" min="0" value="{{ item.quantity }}" aria-label="Quantity of {{ item.name|e }}" data-qty-original="{{ item.quantity }}">
+                                            <button type="button" class="btn-text" data-qty-action="1" aria-label="Increase quantity of {{ item.name|e }}">+</button>
+                                        </span>
+                                    </td>
+                                    <td class="unit-col">{{ item.unit.value|unit_label }}</td>
+                                    <td class="expiry-col">
+                                        {% if item.expiry_date %}
+                                            {% if item.expiry_date < today %}
+                                                <span class="badge badge-danger">Expired {{ item.expiry_date }}</span>
+                                            {% elif item.expiry_date <= expiring_cutoff %}
+                                                <span class="badge badge-warning">Expires {{ item.expiry_date }}</span>
+                                            {% else %}
+                                                <span class="badge badge-info">{{ item.expiry_date }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="actions-col">
+                                        <a href="/items/{{ item.id }}/edit" class="btn-text">Edit</a>
+                                        <button class="btn-text danger" @click="deleteItemId = {{ item.id }}; deleteItemName = '{{ item.name|e }}'">Delete</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <!-- Alpine.js Delete Confirmation Modal -->
+        <div x-show="deleteItemId" x-transition.opacity.duration.150ms class="modal-overlay" @click.outside="deleteItemId = null" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="display: none;">
+            <div class="modal" @click.outside.prevent>
+                <div class="modal-header">
+                    <h3 id="modal-title">Delete Item</h3>
+                    <button @click="deleteItemId = null" class="modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong x-text="deleteItemName"></strong>?</p>
+                    <p class="text-muted">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button @click="deleteItemId = null" class="btn btn-secondary btn-small">Cancel</button>
+                    <button
+                        class="btn btn-danger btn-small"
+                        hx-delete="/api/v1/items/<template x-text=\"deleteItemId\"></template>"
+                        hx-target="closest tr"
+                        hx-swap="outerHTML swap:1s"
+                        @click="deleteItemId = null"
+                    >Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">📭</span>
+        <p>No items found. <a href="/items/new">Add your first item</a></p>
+    </div>
+{% endif %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Items</h1>
+        <p class="page-subtitle">Manage your pantry inventory</p>
+    </div>
+    <a href="/items/new" class="btn" data-shortcut="new">+ Add Item</a>
+</div>
+
+<div class="card">
+    <form hx-get="/items" hx-target="#items-list" hx-trigger="submit" hx-swap="innerHTML" data-no-global-indicator="1">
+        <div class="toolbar">
+            <div class="field search-input">
+                <label for="search">Search</label>
+                <input type="search" id="search" name="search" placeholder="Search items..." value="{{ search or '' }}" aria-label="Search items">
+            </div>
+            <div class="field field-shrink">
+                <label for="location_id">Location</label>
+                <select id="location_id" name="location_id">
+                    <option value="">All Locations</option>
+                    {% for loc in locations %}
+                    <option value="{{ loc.id }}" {% if location_id == loc.id|string %}selected{% endif %}>{{ loc.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field field-shrink">
+                <label for="filter">Status</label>
+                <select id="filter" name="filter">
+                    <option value="all" {% if filter == 'all' %}selected{% endif %}>All</option>
+                    <option value="expiring" {% if filter == 'expiring' %}selected{% endif %}>Expiring Soon</option>
+                </select>
+            </div>
+            <div class="field field-shrink">
+                <label for="sort">Sort</label>
+                <select id="sort" name="sort">
+                    <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name (A–Z)</option>
+                    <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name (Z–A)</option>
+                    <option value="expiry_asc" {% if sort == 'expiry_asc' %}selected{% endif %}>Expiry (soonest)</option>
+                    <option value="expiry_desc" {% if sort == 'expiry_desc' %}selected{% endif %}>Expiry (latest)</option>
+                    <option value="quantity_desc" {% if sort == 'quantity_desc' %}selected{% endif %}>Quantity (high)</option>
+                    <option value="quantity_asc" {% if sort == 'quantity_asc' %}selected{% endif %}>Quantity (low)</option>
+                    <option value="created_desc" {% if sort == 'created_desc' %}selected{% endif %}>Newest first</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Filter</button>
+        </div>
+    </form>
+
+    <div id="bulk-bar" class="bulk-bar" role="status">
+        <span class="bulk-count" id="bulk-count">0 selected</span>
+        <button id="bulk-delete" class="btn btn-danger btn-small" disabled>Delete selected</button>
+    </div>
+
+    <div id="items-list">
+        {% include "partials/items_list.html" %}
+    </div>
+</div>
+{% endblock %}

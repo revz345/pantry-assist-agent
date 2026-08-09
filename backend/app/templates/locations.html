@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Locations</h1>
+        <p class="page-subtitle">Organize your pantry storage</p>
+    </div>
+    <a href="/locations/new" class="btn" data-shortcut="new">+ Add Location</a>
+</div>
+
+<div class="card">
+    {% if locations %}
+        {% for loc in locations %}
+        <div class="item-row">
+            <div class="item-info">
+                <span class="item-name">{{ loc.name }}</span>
+                <span class="item-meta">{{ loc.description or 'No description' }} · {{ loc.items|length }} item{{ 's' if loc.items|length != 1 else '' }}</span>
+            </div>
+            <div class="item-actions">
+                <a href="/locations/{{ loc.id }}/edit" class="btn btn-secondary btn-small">Edit</a>
+                <button class="btn btn-danger btn-small" hx-delete="/api/v1/locations/{{ loc.id }}" hx-target="closest .item-row" hx-swap="outerHTML swap:1s" hx-confirm="Delete {{ loc.name }}?">Delete</button>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">📍</span>
+            <p>No locations yet. <a href="/locations/new">Add your first location</a></p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

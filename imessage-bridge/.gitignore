@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Runtime artifacts
+.bridge.pid
+bridge.log
+*.log
+
+# Env
+.env

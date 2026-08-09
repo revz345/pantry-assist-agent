@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Recipe Suggestions</h1>
+        <p class="page-subtitle">Dishes you can make from what's in your pantry</p>
+    </div>
+    <button class="btn" hx-post="/api/v1/agent/run" hx-target="#recipes-list" hx-swap="innerHTML" hx-indicator="#spinner">✨ Generate Recipes</button>
+</div>
+
+<div class="meal-tabs" role="tablist" aria-label="Filter recipes by meal">
+    <button class="meal-tab {% if not active_meal %}active{% endif %}" hx-get="/recipes/partial" hx-target="#recipes-list" hx-swap="innerHTML" role="tab" aria-selected="{% if not active_meal %}true{% else %}false{% endif %}">All</button>
+    {% for mt in meal_types %}
+    <button class="meal-tab {% if active_meal == mt %}active{% endif %}" hx-get="/recipes/partial?meal_type={{ mt }}" hx-target="#recipes-list" hx-swap="innerHTML" role="tab" aria-selected="{% if active_meal == mt %}true{% else %}false{% endif %}">{{ mt|capitalize }}</button>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div id="recipes-list" hx-get="/recipes/partial{% if active_meal %}?meal_type={{ active_meal }}{% endif %}" hx-trigger="load">
+        {% include "partials/recipes_list.html" %}
+    </div>
+</div>
+{% endblock %}

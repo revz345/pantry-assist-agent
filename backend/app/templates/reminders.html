@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Reminders</h1>
+</div>
+
+<div class="dash-grid">
+    <div class="card">
+        <div class="flex-between">
+            <h2>⚠️ Expiring Soon</h2>
+            <span class="badge badge-warning">{{ expiring|length }}</span>
+        </div>
+        {% if expiring %}
+            {% for item in expiring %}
+            <div class="item-row">
+                <div class="item-info">
+                    <span class="item-name">{{ item.name }}</span>
+                    <span class="item-meta">
+                        {{ item.quantity }} {{ item.unit.value|unit_label }}
+                        {% if item.location %}
+                        <span class="location-badge">{{ item.location.name }}</span>
+                        {% endif %}
+                        <span class="badge badge-warning">Expires {{ item.expiry_date }}</span>
+                    </span>
+                </div>
+                <div class="item-actions">
+                    <a href="/items/{{ item.id }}/edit" class="btn btn-secondary btn-small">Use/Edit</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon" aria-hidden="true">🎉</span>
+                <p>No items expiring soon</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="flex-between">
+            <h2>🗑️ Expired</h2>
+            <span class="badge badge-danger">{{ expired|length }}</span>
+        </div>
+        {% if expired %}
+            {% for item in expired %}
+            <div class="item-row">
+                <div class="item-info">
+                    <span class="item-name">{{ item.name }}</span>
+                    <span class="item-meta">
+                        {{ item.quantity }} {{ item.unit.value|unit_label }}
+                        {% if item.location %}
+                        <span class="location-badge">{{ item.location.name }}</span>
+                        {% endif %}
+                        <span class="badge badge-danger">Expired {{ item.expiry_date }}</span>
+                    </span>
+                </div>
+                <div class="item-actions">
+                    <a href="/items/{{ item.id }}/edit" class="btn btn-secondary btn-small">Remove/Edit</a>
+                    <button class="btn btn-danger btn-small" hx-delete="/api/v1/items/{{ item.id }}" hx-target="closest .item-row" hx-swap="outerHTML swap:1s" hx-confirm="Delete {{ item.name }}?">Delete</button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon" aria-hidden="true">🧹</span>
+                <p>No expired items</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

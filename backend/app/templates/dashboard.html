@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Your pantry at a glance</p>
+    </div>
+    <a href="/items/new" class="btn" data-shortcut="new">+ Add Item</a>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card tone-primary">
+        <span class="stat-label">Total Items</span>
+        <span class="stat-value">{{ total_items }}</span>
+        <span class="stat-hint">across {{ locations_count }} locations</span>
+    </div>
+    <div class="stat-card tone-danger">
+        <span class="stat-label">Expired</span>
+        <span class="stat-value">{{ expired|length }}</span>
+        <span class="stat-hint">need removing</span>
+    </div>
+    <div class="stat-card tone-warning">
+        <span class="stat-label">Expiring Soon</span>
+        <span class="stat-value">{{ expiring|length }}</span>
+        <span class="stat-hint">within 7 days</span>
+    </div>
+    <div class="stat-card tone-success">
+        <span class="stat-label">Fresh</span>
+        <span class="stat-value">{{ fresh|length }}</span>
+        <span class="stat-hint">no rush</span>
+    </div>
+</div>
+
+<div class="dash-grid">
+    <div class="card">
+        <h2>⚠️ Needs Attention</h2>
+        {% if needs_attention %}
+            {% for item in needs_attention %}
+            <div class="item-row">
+                <div class="item-info">
+                    <span class="item-name">{{ item.name }}</span>
+                    <span class="item-meta">
+                        {{ item.quantity }} {{ item.unit.value|unit_label }}
+                        {% if item.location %}
+                        <span class="location-badge">{{ item.location.name }}</span>
+                        {% endif %}
+                        {% if item.expiry_date and item.expiry_date < today %}
+                            <span class="badge badge-danger">Expired {{ item.expiry_date }}</span>
+                        {% elif item.expiry_date %}
+                            <span class="badge badge-warning">Expires {{ item.expiry_date }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="item-actions">
+                    <a href="/items/{{ item.id }}/edit" class="btn btn-secondary btn-small">Edit</a>
+                    <a href="/items" class="btn btn-small">View</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon" aria-hidden="true">🎉</span>
+                <p>Nothing expiring soon. Nice work!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>📍 Items by Location</h2>
+        {% if by_location %}
+            {% set max_count = by_location.values()|max %}
+            <div class="chip-list">
+                {% for loc_name, count in by_location.items() %}
+                {% if count > 0 %}
+                <span class="badge badge-neutral">{{ loc_name }} · {{ count }}</span>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <div class="mt-5">
+                {% for loc_name, count in by_location.items() %}
+                <div class="item-row">
+                    <span class="item-meta">
+                        {% if loc_name == "Fridge" %}❄️
+                        {% elif loc_name == "Freezer" %}🧊
+                        {% elif loc_name == "Pantry" %}📦
+                        {% elif loc_name == "Spice Rack" %}🌿
+                        {% elif loc_name == "Idli-Dosa Kit" %}🥞
+                        {% else %}📍{% endif %}
+                        {{ loc_name }}
+                    </span>
+                    <div class="flex" style="flex: 1; min-width: 120px;">
+                        <div class="progress-track" style="flex: 1;">
+                            <div class="progress-fill" style="width: {{ ((count / max_count * 100) | round | int) if max_count else 0 }}%;"></div>
+                        </div>
+                        <span class="location-count">{{ count }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state"><p>No locations yet.</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <h2>🕒 Recently Added</h2>
+    {% if recently_added %}
+        {% for item in recently_added %}
+        <div class="item-row">
+            <div class="item-info">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-meta">
+                    {{ item.quantity }} {{ item.unit.value|unit_label }}
+                    {% if item.location %}
+                    <span class="location-badge">{{ item.location.name }}</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="item-actions">
+                <a href="/items/{{ item.id }}/edit" class="btn btn-secondary btn-small">Edit</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state"><p>No items yet. <a href="/items/new">Add your first item</a></p></div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% if recipes %}
+    <div class="recipe-grid">
+    {% for recipe in recipes %}
+    <article class="recipe-card">
+        <div class="recipe-card-header">
+            <h3>{{ recipe.title }}</h3>
+            {% if recipe.meal_type %}
+            <span class="badge badge-meal meal-{{ recipe.meal_type }}">{{ recipe.meal_type|capitalize }}</span>
+            {% endif %}
+            <div class="recipe-meta">
+                {% if recipe.estimated_time_minutes %}
+                <span>⏱️ {{ recipe.estimated_time_minutes }} min</span>
+                {% endif %}
+                {% if recipe.servings %}
+                <span>👥 {{ recipe.servings }} servings</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="recipe-card-body">
+            {% if recipe.description %}
+            <p style="margin-top: 0;">{{ recipe.description }}</p>
+            {% endif %}
+            <strong>Ingredients</strong>
+            <ul class="recipe-ingredients">
+                {% for ing in recipe.ingredients %}
+                <li>{{ ing }}</li>
+                {% endfor %}
+            </ul>
+            <strong>Instructions</strong>
+            <ol class="recipe-steps">
+                {% for step in recipe.instructions %}
+                <li>{{ step }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+        <div class="recipe-card-footer">
+            <form hx-post="/api/v1/recipes/feedback" hx-target="this" hx-swap="outerHTML">
+                <input type="hidden" name="recipe_id" value="{{ recipe.id }}">
+                <div class="feedback-row">
+                    <label class="flex" style="font-weight: 500; margin: 0;">
+                        <input type="checkbox" name="accepted" value="true" style="width: auto; accent-color: var(--primary);">
+                        I'll make this
+                    </label>
+                    <div class="rating-stars" role="radiogroup" aria-label="Rate recipe">
+                        {% for n in range(5, 0, -1) %}
+                        <input type="radio" id="recipe-{{ recipe.id }}-star-{{ n }}" name="rating" value="{{ n }}">
+                        <label for="recipe-{{ recipe.id }}-star-{{ n }}" aria-label="{{ n }} star{{ 's' if n != 1 else '' }}">★</label>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-small">Submit</button>
+                </div>
+            </form>
+        </div>
+    </article>
+    {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">🍳</span>
+        <p>No recipes yet. Click "Generate Recipes" to create suggestions from your inventory.</p>
+        <div id="spinner" class="htmx-indicator" style="margin-top: 16px; color: var(--text-muted);">Generating…</div>
+    </div>
+{% endif %}
