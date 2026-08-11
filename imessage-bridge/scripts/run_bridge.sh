@@ -78,4 +78,6 @@ python -m pantry_bridge --stop || true
 
 echo "Starting iMessage bridge..."
 echo "Allowed contacts: $ALLOWED_CONTACTS"
-python -m pantry_bridge
+# Unbuffered stdout so the bridge's prints show up in the log immediately
+# (when stdout is a pipe/file it's block-buffered by default).
+PYTHONUNBUFFERED=1 exec python -u -m pantry_bridge
